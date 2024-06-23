@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.rc('font', family='Microsoft JhengHei')
+matplotlib.rc('font')
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from gensim.models import Word2Vec 
 
@@ -46,7 +46,7 @@ sample_df['tsne_y'] = fit_tsne[:, 1]
 
 
 # 1-of-k
-encoder = OneHotEncoder(sparse=False)
+encoder = OneHotEncoder(sparse_output=False)
 drink_encoded_onehot = encoder.fit_transform(df[['Drink']])
 df_onehot = df.drop('Drink', axis=1)
 df_onehot = pd.concat([df_onehot, pd.DataFrame(drink_encoded_onehot, columns=encoder.get_feature_names_out(['Drink']))], axis=1)
@@ -86,4 +86,79 @@ def apply_tsne(df, title, perplexity=30):
 # t-SNE
 apply_tsne(df_onehot, 't-SNE Visualization with 1-of-k Encoding')
 apply_tsne(df_word2vec, 't-SNE Visualization with w2v Encoding')
+
+
+
+import plotly.graph_objects as go
+import dash
+from dash.dependencies import Input, Output
+import dash_core_components as dcc
+import dash_html_components as html
+
+
+app = dash.Dash(__name__)
+
+scatter_plot = dcc.Graph(
+    id='scatter-plot',
+    figure={
+        'data': [
+            go.Scatter(
+                x=sample_df['tsne_x'],
+                y=sample_df['tsne_y'],
+                mode='markers',
+                marker=dict(
+                    color=sample_df['Class'].map(lambda x: ord(x) - 65),
+                    colorscale='Viridis',
+                    showscale=True
+                ),
+                text=sample_df['Drink'],
+                hovertemplate='%{text}<extra></extra>'
+            )
+        ],
+        'layout': go.Layout(
+            xaxis=dict(domain=[0, 1]),
+            yaxis=dict(domain=[0, 1]),
+            dragmode='select',
+            hovermode='closest',
+            title='Drink Dataset - t-SNE Visualization',
+            coloraxis=dict(colorscale='Viridis', colorbar=dict(title='Class'))
+        )
+    }
+)
+
+data_table = html.Table(id='data-table')
+
+# Define app layout定義應用程式的整體布局，使用 Dash 的 Div 元件和其他元件來組合。
+app.layout = html.Div(children=[
+    html.H1('Drink'),
+    html.Div(children=[
+        html.Div(children=[scatter_plot, ]),
+        html.Div(children=[
+            html.H3('Selected Data Points'),
+            data_table,
+        ]),
+    ])
+])
+
+
+@app.callback(
+    Output('data-table', 'children'),
+    [Input('scatter-plot', 'selectedData')]
+)
+def update_selected_data_table(selected_data):
+    if selected_data is None:
+        return []
+    selected_points = [point['text'] for point in selected_data['points']]
+    selected_df = sample_df[sample_df['Drink'].isin(selected_points)]
+    table_header = [
+        html.Tr([html.Th(col) for col in selected_df.columns])
+    ]
+    table_rows = [
+        html.Tr([
+            html.Td(selected_df.iloc[i][col]) for col in selected_df.columns
+        ]) for i in range(len(selected_df))
+    ]
+    return table_header + table_rows
+
+app.run_server(debug=True, use_reloader=False)
 

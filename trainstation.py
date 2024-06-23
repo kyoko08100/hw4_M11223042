@@ -7,13 +7,13 @@ matplotlib.rc('font', family='Microsoft JhengHei')
 from sklearn.manifold import MDS
 
 locations = {
-    '台北火車站': (25.0937, 121.3816),
-    '新竹火車站': (24.8016, 120.9336),
-    '台中火車站': (23.3870, 119.8354),
-    '斗六火車站': (23.7119, 120.5381),
-    '高雄火車站': (22.6394, 120.3000),
-    '花蓮玉里': (23.3315, 121.3091),
-    '台東知本': (22.7081, 121.0562)
+    '台北火車站': (25.04783683430182, 121.51742765412504), 
+    '新竹火車站': (24.801857441651848, 120.9716203946008),
+    '台中火車站': (24.137464212601387, 120.68694655410444),
+    '斗六火車站': (23.712053828886265, 120.54075299088089),
+    '高雄火車站': (22.63970032395247, 120.3028083019455),
+    '花蓮玉里': (23.392052301784798, 121.37718279388342),
+    '台東知本': (22.718564287364497, 121.05565319275964)
 }
 
 # 轉換格式:位置、名子
@@ -25,7 +25,7 @@ from sklearn.metrics.pairwise import euclidean_distances
 dist_matrix = euclidean_distances(coords)
 
 # MDS
-mds = MDS(n_components=2, random_state=0)
+mds = MDS(n_components=2, random_state=0, dissimilarity='precomputed', normalized_stress='auto')
 pos = mds.fit_transform(dist_matrix)
 
 # 圖   
@@ -43,6 +43,6 @@ plt.show()
 
 # 降維結果
 
-pos['緯度'] = pos[:, 0]
-pos['經度'] = pos[:, 1]
-pos['地點'] = pos.index
+# pos['緯度'] = pos[:, 0]
+# pos['經度'] = pos[:, 1]
+# pos['地點'] = pos.index
